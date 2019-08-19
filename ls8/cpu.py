@@ -19,7 +19,7 @@ class CPU:
         
     #  should accept a value to write, and the address to write it to.
     def ram_write(self,MDR,MAR):
-        return self.ram[MAR] = MDR
+        self.ram[MAR] = MDR
         
 
     def load(self):
@@ -60,12 +60,12 @@ class CPU:
         """
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
+            self.PC,
             #self.fl,
             #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
+            self.ram_read(self.PC),
+            self.ram_read(self.PC + 1),
+            self.ram_read(self.PC + 2)
         ), end='')
 
         for i in range(8):
@@ -73,9 +73,24 @@ class CPU:
 
         print()
 
-    def run(self,pc,address,ram):
+    def run(self):
         """Run the CPU."""
         running = True
 
         while running:
-            ram[address]
+            command = self.ram[IOError]
+            self.IR = self.PC
+            operand_a = self.ram_read(self.PC + 1)
+            operand_b = self.ram_read(self.PC + 2)
+             
+            if command == LDI:
+                self.ram_read(command)
+                self.reg[operand_a] = operand_b
+                self.PC += 3
+            elif command == PRN:
+                print(self.reg[operand_a])
+                self.PC += 2
+            elif command == HLT:
+                running = False
+            else:
+                print(f"unknown command {command}")
