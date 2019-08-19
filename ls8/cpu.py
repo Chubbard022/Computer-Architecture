@@ -5,8 +5,20 @@ import sys
 class CPU:
     """Main CPU class."""
 
-    def __init__(self):
+    def __init__(self,cpu,pc,reg):
         """Construct a new CPU."""
+        self.reg = [0] * 8
+        self.ram = [0] * 255
+        self.PC = 0
+        
+
+    # should accept the address to read and return the value stored there.
+    def ram_read(self,address):
+        for value in address:
+            print(value)
+        
+    #  should accept a value to write, and the address to write it to.
+    def ram_write(self,value,address):
         pass
 
     def load(self):
@@ -60,6 +72,9 @@ class CPU:
 
         print()
 
-    def run(self):
+    def run(self,pc,address,ram):
         """Run the CPU."""
-        pass
+        running = True
+
+        while running:
+            ram[address]
