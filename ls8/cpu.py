@@ -28,6 +28,17 @@ class CPU:
         address = 0
 
         # For now, we've just hardcoded a program:
+        try:
+            with open(sys.argv[1]) as f:
+                for line in f:
+                    num = line[0].split("#",1)
+                    if num.strip() is "":
+                        continue
+                    self.ram[address] = int(num,2)
+                    address += 1
+                    
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {sys.argv[1]} where not found")
 
         program = [
             # From print8.ls8
