@@ -92,6 +92,7 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         HLT = 0b00000001
+        MUL = 0b10100010
 
         operand_a = self.ram_read(self.PC + 1)
         operand_b = self.ram_read(self.PC + 2)
@@ -107,5 +108,8 @@ class CPU:
                 self.PC += 2
             elif command == HLT:
                 running = False
+            elif command == MUL:
+                #need to impliment
+                pass
             else:
                 print(f"unknown command {command}")
