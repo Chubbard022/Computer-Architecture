@@ -10,7 +10,7 @@ class CPU:
         self.reg = [0] * 8
         self.ram = [0] * 255
         self.PC = 0 # program counter
-        self.IC = 0 #instruction register
+        self.IR = 0 #instruction register
         
 
     # should accept the address to read and return the value stored there.
@@ -76,13 +76,17 @@ class CPU:
     def run(self):
         """Run the CPU."""
         running = True
+        self.IR = self.PC
+        
+        LDI = 0b10000010
+        PRN = 0b01000111
+        HLT = 0b00000001
+
+        operand_a = self.ram_read(self.PC + 1)
+        operand_b = self.ram_read(self.PC + 2)
 
         while running:
-            command = self.ram[IOError]
-            self.IR = self.PC
-            operand_a = self.ram_read(self.PC + 1)
-            operand_b = self.ram_read(self.PC + 2)
-             
+            command = self.ram[self.IR]
             if command == LDI:
                 self.ram_read(command)
                 self.reg[operand_a] = operand_b
