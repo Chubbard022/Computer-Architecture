@@ -9,10 +9,13 @@ class CPU:
         """Construct a new CPU."""
         self.reg = [0] * 8
         self.ram = [0] * 255
-        self.PC = 0 # program counter
-        self.IR = 0 #instruction register
-        
+        self.PC = 0 
+        self.IR = 0 
 
+    def halt(self):
+        print('Stopping program')
+        sys.exit(1)
+    
     # should accept the address to read and return the value stored there.
     def ram_read(self,MAR):
         return self.ram[MAR]
@@ -60,7 +63,8 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == 'MUL':
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -94,6 +98,10 @@ class CPU:
         HLT = 0b00000001
         MUL = 0b10100010
 
+        PUSH = 'find what needs to go here'
+        POP = 'find what needs to go here'
+        SP = 0
+
         operand_a = self.ram_read(self.PC + 1)
         operand_b = self.ram_read(self.PC + 2)
 
@@ -109,7 +117,20 @@ class CPU:
             elif command == HLT:
                 running = False
             elif command == MUL:
-                #need to impliment
-                pass
+                self.alu('MUL', operand_a, operand_b)
+                self.PC += 3
+            elif command == PUSH:
+                ram = self.ram[self.PC + 1]
+                val = self.reg[ram]
+                self.reg[SP] -= 1
+                ram[self.reg[SP]] = val
+                self.PC += 2
+            elif command == POP:
+                ram = self.ram[self.PC + 1]
+                val = self.reg[ram]
+                self.reg[SP] += 1
+                ram[self.reg[SP]] = val
+                self.PC += 2
+
             else:
                 print(f"unknown command {command}")
