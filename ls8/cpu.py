@@ -8,6 +8,7 @@ class CPU:
     def __init__(self,PC,IR,reg,ram):
         """Construct a new CPU."""
         self.reg = [0] * 8
+        self.reg[7] = 0xF4
         self.ram = [0] * 255
         self.PC = 0 
         self.IR = 0 
@@ -23,7 +24,14 @@ class CPU:
     #  should accept a value to write, and the address to write it to.
     def ram_write(self,MDR,MAR):
         self.ram[MAR] = MDR
-        
+    
+    def pop(self,reg):
+        self.reg[reg] = self.ram_read(self.reg[7])
+        self.reg[7] += 1
+
+    def push(self, reg):
+        self.reg[7] -= 1
+        self.ram_write(self.reg[reg], self.reg[7])        
 
     def load(self):
         """Load a program into memory."""
@@ -91,16 +99,16 @@ class CPU:
     def run(self):
         """Run the CPU."""
         running = True
-        self.IR = self.PC
-        
+        command = self.ram_read(self.PC)
+
+        HLT = 0b00000001
         LDI = 0b10000010
         PRN = 0b01000111
-        HLT = 0b00000001
         MUL = 0b10100010
-
-        PUSH = 'find what needs to go here'
-        POP = 'find what needs to go here'
-        SP = 0
+        PUSH = 0b01000101
+        POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
 
         operand_a = self.ram_read(self.PC + 1)
         operand_b = self.ram_read(self.PC + 2)
@@ -108,29 +116,32 @@ class CPU:
         while running:
             command = self.ram[self.IR]
             if command == LDI:
-                self.ram_read(command)
                 self.reg[operand_a] = operand_b
                 self.PC += 3
             elif command == PRN:
-                print(self.reg[operand_a])
+                print(f"Register: {operand_a}, Value: {self.reg[operand_a]}")
                 self.PC += 2
             elif command == HLT:
                 running = False
+                self.PC +=1
             elif command == MUL:
-                self.alu('MUL', operand_a, operand_b)
+                self.alu("MUL", operand_a, operand_b)
                 self.PC += 3
             elif command == PUSH:
-                ram = self.ram[self.PC + 1]
-                val = self.reg[ram]
-                self.reg[SP] -= 1
-                ram[self.reg[SP]] = val
+                self.push(operand_a)
                 self.PC += 2
             elif command == POP:
-                ram = self.ram[self.PC + 1]
-                val = self.reg[ram]
-                self.reg[SP] += 1
-                ram[self.reg[SP]] = val
+                self.pop(operand_a)
                 self.PC += 2
-
+            elif command == CALL:
+                # this will push the next command to the stack
+                # and preform the subroutine
+                self.push(operand_a)
+                self.PC += 2
+            elif command == RET:
+                # this will pop the first command from the stack and
+                # put it into PC
+                self.pop(operand_a)
+                self.PC += 1
             else:
                 print(f"unknown command {command}")
