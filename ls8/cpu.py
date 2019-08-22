@@ -8,10 +8,10 @@ class CPU:
     def __init__(self,PC,IR,reg,ram):
         """Construct a new CPU."""
         self.reg = [0] * 8
-        self.reg[7] = 0xF4
         self.ram = [0] * 255
         self.PC = 0 
         self.IR = 0 
+        self.SP = 7
 
     def halt(self):
         print('Stopping program')
@@ -128,20 +128,28 @@ class CPU:
                 self.alu("MUL", operand_a, operand_b)
                 self.PC += 3
             elif command == PUSH:
-                self.push(operand_a)
+                register_address = self.ram_read(self.PC + 1)
+                val = self.reg[register_address]
+                self.reg[self.SP] -= 1  # decrement the stack pointer
+                self.ram[self.reg[self.SP]] = val
                 self.PC += 2
             elif command == POP:
-                self.pop(operand_a)
+                register_address = self.ram_read(self.PC + 1)
+                val = self.ram[self.reg[self.SP]]
+                self.reg[register_address] = val
+                self.reg[self.SP] += 1
                 self.PC += 2
             elif command == CALL:
                 # this will push the next command to the stack
                 # and preform the subroutine
-                self.push(operand_a)
+                self.reg[self.SP] -= 1
+                self.ram[self.reg[self.SP]] = self.PC + 2
                 self.PC += 2
             elif command == RET:
                 # this will pop the first command from the stack and
                 # put it into PC
-                self.pop(operand_a)
+                self.pc = self.ram[self.reg[self.SP]]
+                self.reg[self.SP] += 1
                 self.PC += 1
             else:
                 print(f"unknown command {command}")
