@@ -5,9 +5,33 @@ import sys
 class CPU:
     """Main CPU class."""
 
-    def __init__(self):
+    def __init__(self,PC,IR,reg,ram):
         """Construct a new CPU."""
-        pass
+        self.reg = [0] * 8
+        self.ram = [0] * 255
+        self.PC = 0 
+        self.IR = 0 
+        self.SP = 7
+
+    def halt(self):
+        print('Stopping program')
+        sys.exit(1)
+    
+    # should accept the address to read and return the value stored there.
+    def ram_read(self,MAR):
+        return self.ram[MAR]
+        
+    #  should accept a value to write, and the address to write it to.
+    def ram_write(self,MDR,MAR):
+        self.ram[MAR] = MDR
+    
+    def pop(self,reg):
+        self.reg[reg] = self.ram_read(self.reg[7])
+        self.reg[7] += 1
+
+    def push(self, reg):
+        self.reg[7] -= 1
+        self.ram_write(self.reg[reg], self.reg[7])        
 
     def load(self):
         """Load a program into memory."""
@@ -15,6 +39,17 @@ class CPU:
         address = 0
 
         # For now, we've just hardcoded a program:
+        try:
+            with open(sys.argv[1]) as f:
+                for line in f:
+                    num = line[0].split("#",1)
+                    if num.strip() is "":
+                        continue
+                    self.ram[address] = int(num,2)
+                    address += 1
+                    
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {sys.argv[1]} where not found")
 
         program = [
             # From print8.ls8
@@ -36,7 +71,8 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == 'MUL':
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -47,12 +83,12 @@ class CPU:
         """
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
+            self.PC,
             #self.fl,
             #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
+            self.ram_read(self.PC),
+            self.ram_read(self.PC + 1),
+            self.ram_read(self.PC + 2)
         ), end='')
 
         for i in range(8):
@@ -62,4 +98,58 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        running = True
+        command = self.ram_read(self.PC)
+
+        HLT = 0b00000001
+        LDI = 0b10000010
+        PRN = 0b01000111
+        MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
+
+        operand_a = self.ram_read(self.PC + 1)
+        operand_b = self.ram_read(self.PC + 2)
+
+        while running:
+            command = self.ram[self.IR]
+            if command == LDI:
+                self.reg[operand_a] = operand_b
+                self.PC += 3
+            elif command == PRN:
+                print(f"Register: {operand_a}, Value: {self.reg[operand_a]}")
+                self.PC += 2
+            elif command == HLT:
+                running = False
+                self.PC +=1
+            elif command == MUL:
+                self.alu("MUL", operand_a, operand_b)
+                self.PC += 3
+            elif command == PUSH:
+                register_address = self.ram_read(self.PC + 1)
+                val = self.reg[register_address]
+                self.reg[self.SP] -= 1  # decrement the stack pointer
+                self.ram[self.reg[self.SP]] = val
+                self.PC += 2
+            elif command == POP:
+                register_address = self.ram_read(self.PC + 1)
+                val = self.ram[self.reg[self.SP]]
+                self.reg[register_address] = val
+                self.reg[self.SP] += 1
+                self.PC += 2
+            elif command == CALL:
+                # this will push the next command to the stack
+                # and preform the subroutine
+                self.reg[self.SP] -= 1
+                self.ram[self.reg[self.SP]] = self.PC + 2
+                self.PC += 2
+            elif command == RET:
+                # this will pop the first command from the stack and
+                # put it into PC
+                self.pc = self.ram[self.reg[self.SP]]
+                self.reg[self.SP] += 1
+                self.PC += 1
+            else:
+                print(f"unknown command {command}")
